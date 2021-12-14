@@ -1,0 +1,91 @@
+import matplotlib.pyplot as plt 
+import numpy as np 
+import os 
+import pandas as pd
+df['month'] = df.index.month
+df['weekday'] = df.index.weekday
+df['hour'] = df.index.hour
+df['week'] = df.index.week
+
+df['house_temp'] =(df.t1+df.t2+df.t3+df.t4+df.t5+df.t7+df.t8+df.t9)/8
+df['house_hum'] =(df.rh_1+df.rh_2+df.rh_3+df.rh_4+df.rh_5+df.rh_7+df.rh_8+df.rh_9)/8
+df['weekday_avg'] = list(map(
+    code_mean(df[:], 'weekday', "appliances").get, df.weekday))
+df['hour_avg'] = list(map(
+    code_mean(df[:], 'hour', "appliances").get, df.hour))
+df_hour = df.resample('1H').mean()
+df_30min =df.resample('30min').mean()
+def daily(x,df=df):
+return df.groupby('weekday')[x].mean()
+def hourly(x,df=df):
+return df.groupby('hour')[x].mean()
+
+def monthly_daily(x,df=df):
+by_day = df.pivot_table(index='weekday', 
+columns=['month'],
+values=x,
+aggfunc='mean')
+return round(by_day, ndigits=2)
+daily('appliances').plot(kind = 'bar', figsize=(10,8))
+ticks = list(range(0, 7, 1)) 
+labels = "Mon Tues Weds Thurs Fri Sat Sun".split()
+plt.xlabel('Day')
+plt.ylabel('Appliances consumption in Wh')
+plt.title('Mean Energy Consumption per Day of Week')
+plt.xticks(ticks, labels)
+hourly('appliances').plot(figsize=(10,8))
+plt.xlabel('Hour')
+plt.ylabel('Appliances consumption in Wh')
+ticks = list(range(0, 24, 1))
+plt.title('Mean Energy Consumption per Hour of a Day')
+
+plt.xticks(ticks)
+f, axes = plt.subplots(1, 2,figsize=(10,4))
+nRowsRead = 1000 
+df1 = pd.read_csv ('C:/Users/Ανδριάνα/Desktop/archive/input/KAG_energydata_complete.csv', delimiter=',', nrows = nRowsRead)
+df1.dataframeName = 'KAG_energydata_complete.csv'
+nRow, nCol = df1.shape
+print(f'There are {nRow} rows and {nCol} columns')
+plotplotcolumn(df1, 10, 5)
+plotCorrelationMatrix(df1, 8)
+plotScatterMatrix(df1, 20, 10)
+temp_weekend =  data[data['WEEKDAY'] == 1]
+visData = go.Scatter( x= temp_weekend.date  ,  mode = "lines", y = temp_weekend.Appliances )
+layout = go.Layout(title = 'Appliance energy consumption measurement on weekend' , xaxis=dict(title='Date'), yaxis=dict(title='(Wh)'))
+fig = go.Figure(data=[visData],layout=layout)
+iplot(fig)
+f = plt.figure(figsize=(12,5))
+plt.xlabel('Appliance consumption in Wh')
+plt.ylabel('Frequency')
+sns.distplot(target_vars , bins=10 ) 
+
+def plotCorrelationMatrix(df, graphWidth):
+filename = df.dataframeName
+df = df.dropna('columns')
+df = df[[col for col in df if df[col].nunique() > 1]] 
+if df.shape[1] < 2:
+print(f'No correlation plots shown: The number of non-NaN or constant columns ({df.shape[1]}) is less than 2')
+return
+corr = df.corr()
+plt.figure(num=None, figsize=(graphWidth, graphWidth), dpi=80, facecolor='w', edgecolor='k')
+corrMat = plt.matshow(corr, fignum = 1)
+plt.xticks(range(len(corr.columns)), corr.columns, rotation=90)
+plt.yticks(range(len(corr.columns)), corr.columns)
+plt.gca().xaxis.tick_bottom()
+plt.colorbar(corrMat)
+plt.title(f'Correlation Matrix for {filename}', fontsize=15)
+plt.show()
+def plotScatterMatrix(df, plotSize, textSize):
+df = df.select_dtypes(include =[np.number])
+df = df.dropna('columns')
+df = df[[col for col in df if df[col].nunique() > 1]] 
+columnNames = list(df)
+if len(columnNames) > 10: 
+columnNames = columnNames[:10]
+df = df[columnNames]
+ax = pd.plotting.scatter_matrix(df, alpha=0.75, figsize=[plotSize, plotSize], diagonal='kde')
+corrs = df.corr().values
+for i, j in zip(*plt.np.triu_indices_from(ax, k = 1)):
+ax[i, j].annotate('Corr. coef = %.3f' % corrs[i, j], (0.8, 0.2), xycoords='axes fraction', ha='center', va='center', size=textSize)
+plt.suptitle('Scatter and Density Plot')
+plt.show()
